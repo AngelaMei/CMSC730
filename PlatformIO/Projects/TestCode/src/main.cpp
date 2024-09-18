@@ -10,7 +10,7 @@ const char *morseCode[] = {
 void morseCodeConverter(char c){
   if (c >= '0' && c <= '9')
   {
-    int index = c - '0';
+    int index = c - '0'; //Why it need to sub 0
     for (int i = 0; morseCode[index][i] != '\0'; i++){
       if (morseCode[index][i] == '.'){
         digitalWrite(ledPin, HIGH);
