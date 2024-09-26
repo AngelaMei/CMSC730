@@ -1,0 +1,73 @@
+
+// #include <Arduino.h>
+
+// const int voltagePin = 23;
+// const int sensingPin = 36;
+// const int buzzer = 16;
+// const int ledPin = 21;
+
+// // Melody
+// const int startMelody[] = {329, 329, 329, 262, 329, 392, 392, 262, 392, 329, 440, 494, 466, 440, 392, 329, 392, 440, 349, 392, 329, 262, 294, 494};
+// const int winningMelody[] = {};
+// const int losingMelody[] = {};
+// const int pitchMap[] = {440, 494, 523, 554, 587, 622, 660};
+
+
+// void playMelody(const int *melody, int duration = 250) {
+//   for (int i = 0; melody[i] != 0; i++) {
+//     tone(buzzer, melody[i]);
+//     delay(duration);
+//     noTone(buzzer);
+//   }
+// }
+
+// void setup(){
+//   pinMode(voltagePin, OUTPUT);
+//   pinMode(sensingPin, INPUT);
+//   pinMode(ledPin, OUTPUT);
+//   pinMode(buzzer, OUTPUT);
+
+//   digitalWrite(voltagePin, HIGH); //3.3V
+
+//   Serial.begin(9600);
+// }
+
+// void gameStart(){
+//   playMelody(startMelody);
+//   Serial.print("Welcome to Number Guessing Game");
+//   Serial.print("The number represents the targeted ambient light intensity");
+//   Serial.print("Change the ambient light to approximate the target");
+// }
+
+// void loop(){
+
+//   // 1. Generate a random number at the beginning of the game
+//   int target = random(255);
+//   gameStart();
+
+//   // 2. Start Timer
+//   unsigned long startTime = millis();
+
+//   // 3. change the ambient light to approximate the target
+//   while (true) {
+//     int result = analogRead(sensingPin);
+//     int ledResult = (int)(result / 4095.0 * 255.0);
+//     analogWrite(ledPin, ledResult);
+
+//     // 4. different pitch
+//     int guessDifference = abs(target - ledResult);
+//     int pitchIndex = map(guessDifference, 0, 255, 6, 0);
+//     int pitch = pitchMap[pitchIndex];
+//     tone(buzzer, pitch);
+//     delay(100);
+//     noTone(buzzer);
+
+//     // 5. Check for win or loss
+//     if (guessDifference == 0 && millis() - startTime <= 10000) {
+//       playMelody(winningMelody);
+//       break;
+//     } else if (millis() - startTime > 10000) {
+//       playMelody(losingMelody);
+//       break;
+//   }
+// }

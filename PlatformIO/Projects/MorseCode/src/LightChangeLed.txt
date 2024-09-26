@@ -1,0 +1,31 @@
+#include <Arduino.h>
+
+const int voltagePin = 23;
+const int sensingPin = 36;
+
+const int ledPin = 21; // Default LED is connected to GPIO 21
+
+void setup(){
+  pinMode(voltagePin, OUTPUT);
+  pinMode(sensingPin, INPUT); //Optional
+  pinMode(ledPin, OUTPUT);
+
+  digitalWrite(voltagePin, HIGH); //3.3V on all the time
+  
+  Serial.begin(9600);
+}
+
+void loop() {
+  // The V form sensor
+  int result = analogRead(sensingPin);
+  Serial.println(result);
+
+  int ledResult = (int)(result / 4095.0 * 255.0);
+  
+  Serial.print("ledResult: ");
+  Serial.println(ledResult);
+
+  analogWrite(ledPin, ledResult);
+
+  delay(1000);
+}
