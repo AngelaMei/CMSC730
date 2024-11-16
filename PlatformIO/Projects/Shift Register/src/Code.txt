@@ -1,0 +1,71 @@
+#include <Arduino.h>
+#include <Wire.h> // Wire library
+
+const int sda = 21; //Data Pin
+const int scl = 22; //Clock Pin
+
+int latchPin = 18;
+int clockPin = 5;
+int dataPin = 19;
+
+// IMU
+int address = 0x68;
+float AccelSensitiveScale = 2048.0; //+-2G
+float GyroSensitiveScale = 131.0;
+unsigned long previousTime = 0;
+
+struct IMUData {
+  byte high;
+  byte low;
+  float g;
+  float perS;
+  float angle;
+  int16_t raw;
+};
+
+IMUData accelX, accelY, accelZ;
+IMUData gyroX, gyroY, gyroZ;
+
+
+// Shift
+byte mybyte = 0b00001100;
+byte led_data = 0;
+
+void setup() {
+  pinMode(latchPin, OUTPUT);
+  pinMode(clockPin, OUTPUT);
+  pinMode(dataPin, OUTPUT);
+}
+
+
+void updateShiftRegister(){
+  digitalWrite(latchPin, LOW);
+  shiftOut(dataPin, clockPin, LSBFIRST, led_data);
+  digitalWrite(latchPin, HIGH);
+}
+
+void loop() {
+  led_data = 0;
+  updateShiftRegister();
+  delay(500);
+
+  // digitalWrite(dataPin, HIGH); //Push 1bit into shift
+  // digitalWrite(clockPin, HIGH);
+  // digitalWrite(clockPin, LOW);
+
+  for(int i = 0; i < 8; i++){ 
+    bitSet(led_data,i);
+    updateShiftRegister();
+    delay(500);
+    // digitalWrite(dataPin, LOW); //Push 7"0" into shift >> 0b1000000
+    // // digitalWrite(dataPin, HIGH);
+    // digitalWrite(clockPin, HIGH); //Tick the data each time push in
+    // digitalWrite(clockPin, LOW);
+  }
+
+  // digitalWrite(latchPin, HIGH);
+  // digitalWrite(latchPin, LOW);
+
+  // delay(4000);
+
+}
