@@ -1,0 +1,212 @@
+#include <Arduino.h>
+#include <Wire.h>
+
+const int greenLed = 15;
+const int redLed = 2;
+const int sda = 21; //Data Pin
+const int scl = 22; //Clock Pin
+
+// IMU
+int address = 0x68;
+float AccelSensitiveScale = 2048.0; //+-2G
+float GyroSensitiveScale = 131.0;
+unsigned long previousTime = 0;
+
+// Cali
+float caliX = 329.56;
+float caliY = 1257.35;
+float caliZ = 538.38;
+
+struct IMUData {
+  byte high;
+  byte low;
+  float g;
+  float perS;
+  float angle;
+  int16_t raw;
+};
+
+IMUData accelX, accelY, accelZ;
+IMUData gyroX, gyroY, gyroZ;
+
+// Vibration Motor
+const int vibrator1 = 19; // Left
+const int vibrator2 = 18; // Right
+const int vibrator3 = 17; // Front
+const int vibrator4 = 16; // Back
+
+// Define the dance move dictionary
+const char* dance_moves[][6] = {
+  {"L", "L", "R", "F", "R", "F"},
+  {"L", "L", "R", "R", "F", "R"}
+};
+
+const int num_moves = 2; // Number of dance sequences
+
+
+void readAccelerometerData() {
+  // Read all accelerometer data in one transmission
+  Wire.beginTransmission(address);
+  Wire.write(0x3B);  // Start with accelerometer X-axis register address
+  Wire.endTransmission();
+
+  Wire.requestFrom(address, 6);  // Read 6 bytes for all axes
+
+  accelX.high = Wire.read();
+  accelX.low = Wire.read();
+  accelY.high = Wire.read();
+  accelY.low = Wire.read();
+  accelZ.high = Wire.read();
+  accelZ.low = Wire.read();
+  
+  // Calculate g-forces for accelerometer
+  accelX.g = static_cast<int16_t>((accelX.high << 8) | accelX.low) / AccelSensitiveScale;
+  accelY.g = static_cast<int16_t>((accelY.high << 8) | accelY.low) / AccelSensitiveScale;
+  accelZ.g = static_cast<int16_t>((accelZ.high << 8) | accelZ.low) / AccelSensitiveScale;
+
+  Serial.print(">accelX:");
+  Serial.println(accelX.g);
+  Serial.print(">accelY:");
+  Serial.println(accelY.g);
+  Serial.print(">accelZ:");
+  Serial.println(accelZ.g);
+  delay(10);
+
+  // Gyro
+  Wire.beginTransmission(address);
+  Wire.write(0x43);  // Start with accelerometer X-axis register address
+  Wire.endTransmission();
+
+  Wire.requestFrom(address, 6);  // Read 6 bytes for all axes
+
+  gyroX.high = Wire.read();
+  gyroX.low = Wire.read();
+  gyroY.high = Wire.read();
+  gyroY.low = Wire.read();
+  gyroZ.high = Wire.read();
+  gyroZ.low = Wire.read();
+  
+  // Calculate angular velocities for gyro (modify if needed)
+  gyroX.raw = static_cast<int16_t>((gyroX.high << 8) | gyroX.low);
+  gyroY.raw = static_cast<int16_t>((gyroY.high << 8) | gyroY.low);
+  gyroZ.raw = static_cast<int16_t>((gyroZ.high << 8) | gyroZ.low);
+
+  gyroX.perS = (gyroX.raw - caliX) / GyroSensitiveScale;
+  gyroY.perS = (gyroY.raw - caliY) / GyroSensitiveScale;
+  gyroZ.perS = (gyroZ.raw - caliZ) / GyroSensitiveScale;
+
+  unsigned long currentTime = millis();
+  float elapsedTime = (currentTime - previousTime) / 1000.0f;
+
+  gyroX.angle += gyroX.perS * elapsedTime;
+  gyroY.angle += gyroY.perS * elapsedTime;
+  gyroZ.angle += gyroZ.perS * elapsedTime;
+  
+  previousTime = currentTime;
+
+  // Serial.print(">gyroAngleX:");
+  // Serial.println(gyroX.angle);
+  // Serial.print(">gyroAngleY:");
+  // Serial.println(gyroY.angle);
+  // Serial.print(">gyroAngleZ:");
+  // Serial.println(gyroZ.angle);
+  delay(10);
+}
+
+// Function to activate the corresponding motor
+void activateMotor(char move) {
+  switch (move) {
+    case 'L':
+      analogWrite(vibrator1, 10000); // Full speed
+      Serial.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Now move:Left");
+      break;
+    case 'R':
+      analogWrite(vibrator2, 10000); // Full speed
+      Serial.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Now move:Right");
+      break;
+    case 'F':
+      analogWrite(vibrator3, 10000); // Full speed
+      Serial.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Now move:Front");
+      break;
+    case 'B':
+      analogWrite(vibrator4, 10000); // Full speed
+      Serial.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>Now move:Back");
+      break;
+  }
+}
+
+void stopAllMotors() {
+  analogWrite(vibrator1, 0);
+  analogWrite(vibrator2, 0);
+  analogWrite(vibrator3, 0);
+  analogWrite(vibrator4, 0);
+}
+
+bool checkMovement(char move){
+    readAccelerometerData(); 
+    float threshold = 5;
+
+    switch (move) {
+      case 'L':
+        return accelX.g > threshold;  // Left movement
+      case 'R':
+        return accelX.g > threshold;   // Right movement
+      case 'F':
+        return accelZ.g > threshold;   // Forward movement
+      case 'B':
+        return accelZ.g > threshold;  // Backward movement
+    }
+}
+
+void setup(){
+  Wire.begin(sda, scl);
+
+  pinMode(greenLed, OUTPUT);
+  pinMode(redLed, OUTPUT);
+
+  pinMode(vibrator1, OUTPUT);
+  pinMode(vibrator2, OUTPUT);
+  pinMode(vibrator3, OUTPUT);
+  pinMode(vibrator4, OUTPUT);
+
+  Serial.begin(9600);
+}
+
+void loop() {
+  for (int dance_move_index = 0; dance_move_index < num_moves; dance_move_index++) {
+  Serial.print("Playing Dance Sequence ");
+  Serial.println(dance_move_index + 1);
+
+  // Iterate through each step in the dance move sequence
+    for (int i = 0; dance_moves[dance_move_index][i][0] != '\0'; i++) {
+      char move = dance_moves[dance_move_index][i][0];
+
+      // Vibrate the corresponding motor based on the move
+      activateMotor(move);
+
+       // Wait until the user performs the correct movement
+      while (!checkMovement(move)) {
+        Serial.println("Incorrect movement!");
+        digitalWrite(redLed, HIGH);  // Light up red LED
+        delay(500);                  // Give time for user correction
+        digitalWrite(redLed, LOW);
+      }
+
+      // If movement is correct, light up green LED
+      Serial.println("Correct movement!");
+      digitalWrite(greenLed, HIGH);
+      delay(300);  // Keep green LED on for 300ms
+      digitalWrite(greenLed, LOW);
+
+
+      // Turn off all vibration motors
+      stopAllMotors();
+
+      // Delay between moves (adjust as needed)
+      delay(500);
+    }
+
+    // Add a pause between dance sequences (optional)
+    delay(1000);
+  }
+}

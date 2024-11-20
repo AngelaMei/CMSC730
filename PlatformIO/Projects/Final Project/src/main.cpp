@@ -1,188 +1,135 @@
 #include <Arduino.h>
 #include <Wire.h>
+#include <WiFi.h>
+#include <WebServer.h>
+#include <WebSocketsServer.h>
 
-const int greenLed = 15;
-const int redLed = 2;
+const char* ssid = "AngelaMei";
+const char* password = "123456789";
 
-// IMU
-int address = 0x68;
-const int sda = 21; //Data Pin
-const int scl = 22; //Clock Pin
+// Force Sensors
+const int Force1 = 32;
+const int Force2 = 33;
+const int Force3 = 34;
+int fsrReading1, fsrReading2, fsrReading3;
+float forceInNewtons1, forceInNewtons2, forceInNewtons3;
 
-struct IMUData {
-  byte high;
-  byte low;
-  float g;
-};
-
-IMUData accelX, accelY, accelZ;
-IMUData gyroX, gyroY, gyroZ;
-
-// Vibration Motor
-const int vibrator1 = 19; // Left
-const int vibrator2 = 18; // Right
-const int vibrator3 = 17; // Front
-const int vibrator4 = 16; // Back
-
-// Define the dance move dictionary
-const char* dance_moves[][6] = {
-  {"L", "L", "R", "F", "R", "F"},
-  {"L", "L", "R", "R", "F", "R"}
-};
-
-const int num_moves = 2; // Number of dance sequences
-
-
-void readAccelerometerData() {
-  // Read all accelerometer data in one transmission
-  Wire.beginTransmission(address);
-  Wire.write(0x3B);  // Start with accelerometer X-axis register address
-  Wire.endTransmission();
-
-  Wire.requestFrom(address, 6);  // Read 6 bytes for all axes
-
-  accelX.high = Wire.read();
-  accelX.low = Wire.read();
-  accelY.high = Wire.read();
-  accelY.low = Wire.read();
-  accelZ.high = Wire.read();
-  accelZ.low = Wire.read();
-  
-  // Calculate g-forces for accelerometer
-  accelX.g = static_cast<int16_t>((accelX.high << 8) | accelX.low) / 16384.0;
-  accelY.g = static_cast<int16_t>((accelX.high << 8) | accelX.low) / 16384.0;
-  accelZ.g = static_cast<int16_t>((accelX.high << 8) | accelX.low) / 16384.0;
-
-  Serial.print(">accelX:");
-  Serial.println(accelX.g);
-  Serial.print(">accelY:");
-  Serial.println(accelY.g);
-  Serial.print(">accelZ:");
-  Serial.println(accelZ.g);
-  delay(10);
-
-  // Gyro
-  Wire.beginTransmission(address);
-  Wire.write(0x43);  // Start with accelerometer X-axis register address
-  Wire.endTransmission();
-
-  Wire.requestFrom(address, 6);  // Read 6 bytes for all axes
-
-  gyroX.high = Wire.read();
-  gyroX.low = Wire.read();
-  gyroY.high = Wire.read();
-  gyroY.low = Wire.read();
-  gyroZ.high = Wire.read();
-  gyroZ.low = Wire.read();
-  
-  // Calculate angular velocities for gyro (modify if needed)
-  gyroX.g = static_cast<int16_t>((gyroX.high << 8) | gyroX.low) / 16384.0; // Assuming same conversion for gyro
-  gyroY.g = static_cast<int16_t>((gyroY.high << 8) | gyroY.low) / 16384.0;
-  gyroZ.g = static_cast<int16_t>((gyroZ.high << 8) | gyroZ.low) / 16384.0;
-
-  Serial.print(">gyrox:");
-  Serial.println(gyroX.g);
-  Serial.print(">gyroy:");
-  Serial.println(gyroY.g);
-  Serial.print(">gyroz:");
-  Serial.println(gyroZ.g);
-  delay(10);
+float convertToForce(int adcValue) {
+  float maxForce = 98.0;  // Max force in Newtons
+  float maxAdcValue = 4095.0;
+  return (adcValue / maxAdcValue) * maxForce;
 }
 
-// Function to activate the corresponding motor
-void activateMotor(char move) {
-  switch (move) {
-    case 'L':
-      analogWrite(vibrator1, 10000); // Full speed
-      Serial.println("Left");
-      break;
-    case 'R':
-      analogWrite(vibrator2, 10000); // Full speed
-      Serial.println("Right");
-      break;
-    case 'F':
-      analogWrite(vibrator3, 10000); // Full speed
-      Serial.println("Front");
-      break;
-    case 'B':
-      analogWrite(vibrator4, 10000); // Full speed
-      Serial.println("Back");
-      break;
-  }
-}
+// Web server setup
+WebServer server(80);
 
-void stopAllMotors() {
-  analogWrite(vibrator1, 0);
-  analogWrite(vibrator2, 0);
-  analogWrite(vibrator3, 0);
-  analogWrite(vibrator4, 0);
-}
+// WebSocket setup
+WebSocketsServer webSocket = WebSocketsServer(81); // WebSocket on port 81
 
-bool checkMovement(char move){
-    readAccelerometerData(); 
-    float threshold = 0.1;
 
-    switch (move) {
-      case 'L':
-        return gyroX.g < -threshold;  // Left movement
-      case 'R':
-        return gyroX.g > threshold;   // Right movement
-      case 'F':
-        return gyroY.g > threshold;   // Forward movement
-      case 'B':
-        return gyroY.g < -threshold;  // Backward movement
+// HTML content served by ESP32
+const char INDEX_HTML[] PROGMEM = R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Insole Force Sensors</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
     }
+    .dot {
+      position: absolute;
+      background-color: red;
+      border-radius: 50%;
+      opacity: 0.8;
+    }
+  </style>
+  <script>
+    const updateDot = (id, force, x, y) => {
+      const dot = document.getElementById(id);
+      dot.style.width = force * 10 + "px"; // Adjust scaling factor
+      dot.style.height = force * 10 + "px";
+      dot.style.left = x + "px";
+      dot.style.top = y + "px";
+    };
+
+    const socket = new WebSocket(`ws://${window.location.hostname}:81`);
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      updateDot('dot1', data.force1, 50, 100);
+      updateDot('dot2', data.force2, 150, 200);
+      updateDot('dot3', data.force3, 250, 300);
+    };
+
+    socket.onerror = () => console.error("WebSocket error occurred");
+  </script>
+</head>
+<body>
+  <h1>Insole Force Sensors</h1>
+  <div id="dot1" class="dot"></div>
+  <div id="dot2" class="dot"></div>
+  <div id="dot3" class="dot"></div>
+</body>
+</html>
+)rawliteral";
+
+// Serve the HTML page
+void handleRoot() {
+  server.send(200, "text/html", INDEX_HTML);
 }
 
-void setup(){
-  Wire.begin(sda, scl);
+// Send force data to the client over WebSocket
+void sendForceData() {
+  String jsonData = "{\"force1\":" + String(forceInNewtons1) +
+                    ",\"force2\":" + String(forceInNewtons1) +
+                    ",\"force3\":" + String(forceInNewtons1) + "}";
+  webSocket.broadcastTXT(jsonData); // Send data to all connected clients
+  // Serial.print(forceInNewtons1);
+}
 
-  pinMode(greenLed, OUTPUT);
-  pinMode(redLed, OUTPUT);
+void setup() {
+  Serial.begin(115200);
 
-  pinMode(vibrator1, OUTPUT);
-  pinMode(vibrator2, OUTPUT);
-  pinMode(vibrator3, OUTPUT);
-  pinMode(vibrator4, OUTPUT);
+  // Connect to Wi-Fi
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nWiFi connected");
+  Serial.println("IP Address: " + WiFi.localIP().toString());
 
-  Serial.begin(9600);
+  // Initialize web server
+  server.on("/", handleRoot);
+  server.begin();
+
+  // Initialize WebSocket server
+  webSocket.begin();
+
+  Serial.println("Web server and WebSocket server started.");
 }
 
 void loop() {
-  for (int dance_move_index = 0; dance_move_index < num_moves; dance_move_index++) {
-  Serial.print("Playing Dance Sequence ");
-  Serial.println(dance_move_index + 1);
+  // Read ADC values from the force sensors
+  fsrReading1 = analogRead(Force1);
+  fsrReading2 = analogRead(Force2);
+  fsrReading3 = analogRead(Force3);
 
-  // Iterate through each step in the dance move sequence
-    for (int i = 0; dance_moves[dance_move_index][i][0] != '\0'; i++) {
-      char move = dance_moves[dance_move_index][i][0];
+  // Convert ADC values to force in Newtons
+  forceInNewtons1 = convertToForce(fsrReading1);
+  forceInNewtons2 = convertToForce(fsrReading2);
+  forceInNewtons3 = convertToForce(fsrReading3);
 
-      // Vibrate the corresponding motor based on the move
-      activateMotor(move);
+  // Handle WebSocket and web server
+  server.handleClient();
+  webSocket.loop(); 
 
-       // Wait until the user performs the correct movement
-      while (!checkMovement(move)) {
-        Serial.println("Incorrect movement!");
-        digitalWrite(redLed, HIGH);  // Light up red LED
-        delay(500);                  // Give time for user correction
-        digitalWrite(redLed, LOW);
-      }
-
-      // If movement is correct, light up green LED
-      Serial.println("Correct movement!");
-      digitalWrite(greenLed, HIGH);
-      delay(300);  // Keep green LED on for 300ms
-      digitalWrite(greenLed, LOW);
-
-
-      // Turn off all vibration motors
-      stopAllMotors();
-
-      // Delay between moves (adjust as needed)
-      delay(500);
-    }
-
-    // Add a pause between dance sequences (optional)
-    delay(1000);
+  // Send force data every 1 second
+  static unsigned long lastTime = 0;
+  if (millis() - lastTime > 1000) {
+    sendForceData();  // Send the updated force data
+    lastTime = millis();
   }
 }
