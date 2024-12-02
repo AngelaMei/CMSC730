@@ -1,69 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FSR Data Monitor</title>
-    <script>
-        let socket;
-        let socket2;
-
-        // Function to initialize WebSocket connection for ESP1
-        function startWebSocket1() {
-            const esp32IP1 = "ws://10.0.0.123:82"; // Replace with ESP32 #1's IP
-            socket = new WebSocket(esp32IP1);
-
-            socket.onopen = function() {
-                console.log("Connected to WebSocket 1");
-            };
-
-            socket.onmessage = function(event) {
-                const data = JSON.parse(event.data); // Parse the JSON data
-                document.getElementById("fsrData").innerText = JSON.stringify(data, null, 2); // Display formatted data
-            };
-
-            socket.onerror = function(error) {
-                console.error("WebSocket 1 Error: ", error);
-            };
-
-            socket.onclose = function() {
-                console.log("WebSocket 1 closed");
-            };
-        }
-
-        // Function to initialize WebSocket connection for ESP2
-        function startWebSocket2() {
-            const esp32IP2 = "ws://10.0.0.126:81"; // Replace with ESP32 #2's IP
-            socket2 = new WebSocket(esp32IP2);
-
-            socket2.onopen = function() {
-                console.log("Connected to WebSocket 2");
-            };
-
-            socket2.onmessage = function(event) {
-                const data = JSON.parse(event.data); // Parse the JSON data
-                document.getElementById("fsrData1").innerText = JSON.stringify(data, null, 2); // Display formatted data
-            };
-
-            socket2.onerror = function(error) {
-                console.error("WebSocket 2 Error: ", error);
-            };
-
-            socket2.onclose = function() {
-                console.log("WebSocket 2 closed");
-            };
-        }
-
-        // Initialize both WebSocket connections on window load
-        window.onload = function() {
-            startWebSocket1();
-            startWebSocket2();
-        };
-    </script>
+    <script type="module" src="./script.js"></script>
 </head>
 <body>
     <h1>FSR Data Monitor</h1>
     <h2>ESP32 #1</h2>
-    <pre id="fsrData">Waiting for data...</pre>
+    <canvas id="canvas1" width="600" height="300" style="border:1px solid black;"></canvas>
     <h2>ESP32 #2</h2>
-    <pre id="fsrData1">Waiting for data...</pre>
+    <canvas id="canvas2" width="600" height="300" style="border:1px solid black;"></canvas>
 </body>
 </html>

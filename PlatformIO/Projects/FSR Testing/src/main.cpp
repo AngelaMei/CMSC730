@@ -3,8 +3,14 @@
 #include <WebServer.h>
 #include <WebSocketsServer.h>
 
-const char* ssid = "5120Navahoe";
-const char* password = "5120Roommates!";
+#include "soc/soc.h"
+#include "soc/rtc_cntl_reg.h"
+
+const char* ssid = "AngelaMei";
+const char* password = "123456789";
+
+// const char* ssid = "5120Navahoe";
+// const char* password = "5120Roommates!";
 
 // Web server setup
 WebServer server(80);
@@ -34,6 +40,7 @@ String jsonData;
 
 void setup() {
   Serial.begin(9600); // Initialize serial communication at 9600 baud rate
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
 
   // WiFi
   WiFi.begin(ssid, password);
