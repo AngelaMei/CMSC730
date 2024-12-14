@@ -1,0 +1,230 @@
+body,html {
+    height: 100vh;
+    width: 100vw;
+    margin: 0;
+    padding: 0;
+    background-image: linear-gradient( 109.6deg,  rgba(102,51,153,1) 11.2%, rgba(2,0,4,1) 91.1% );
+    /* background-color: skyblue;
+    background-image: -webkit-linear-gradient(90deg, skyblue 0%, steelblue 100%); */
+    font-family: "Bagel Fat One", system-ui;
+    font-weight: 400;
+    font-style: normal;
+    color: white;
+}
+
+a{
+    text-decoration: none;
+    color: white;
+}
+
+h1{
+    font-family: "Bagel Fat One", system-ui;
+    font-weight: 500;
+    font-style: normal;
+    font-size: 80px;
+}
+
+#CalibrationStatus{
+    font-size: 1.3em;
+    font-weight: light;
+    font-family: "DynaPuff", system-ui;
+    font-style: normal;
+}
+/* Overall Styles */
+.scoreboard {
+    padding-top: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 46px;
+  }
+  
+  /* Players Section */
+  .players {
+    display: flex;
+    gap: 300px;
+  }
+  
+  .player {
+    display: flex;
+    align-self: stretch;
+    justify-content: space-between;
+    align-items: center;
+    gap: 50px;
+  }
+  
+  .player img {
+    width: auto;
+    height: 100px;
+  }
+  
+  .player-info {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    box-shadow: 0px 10px 0px rgba(0, 0, 0, 0.15);
+    border-radius: 22px;
+    border: 3px solid #fff;
+    box-sizing: border-box;
+    width: auto;
+    height: 120px;
+    background: #fff9ac;  
+    font-size:30px;
+    color: white;
+    padding: 24px;
+    font-family: "DynaPuff", system-ui;
+    font-style: normal;
+    gap: 50px;
+  }
+  
+  .player-name {
+    color: #414141;
+    font-size: 32px;
+    letter-spacing: 3.20px;
+  }
+
+  #player1-score,
+  #player2-score {
+    color: #414141;
+    font-size: 50px;
+  }
+  
+/* Score Bars Section */
+.score-bars {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    width: 100%;
+  }
+  
+/* Individual Insole Containers */
+.insole-container {
+    position: relative;
+    width: 200px; /* Ensure the insole fits within the container */
+    height: auto;
+  }
+  
+  /* Insole Images */
+.insole {
+    width: 100%; /* Make the insole fill its container */
+    height: auto;
+}
+
+svg path {
+  fill: blue; 
+}
+  
+.target-marker {
+    position: absolute;
+    width: 100px; /* Adjust size for better visibility */
+    transform: translate(-50%, -50%);
+    display: none; /* Initially hidden */
+    pointer-events: none;
+}
+  
+  
+/* Adjust marker placement for insole regions */
+#targetLeftToe {
+left: 70%;
+top: 10%;
+}
+
+#targetLeftMiddle {
+left: 15%;
+top: 30%;
+}
+
+#targetLeftHeel {
+left: 40%;
+top: 85%;
+}
+
+#targetRightToe {
+left: 30%;
+top: 10%;
+}
+
+#targetRightMiddle {
+left: 90%;
+top: 30%;
+}
+
+#targetRightHeel {
+left: 60%;
+top: 85%;
+}
+
+.buttonGroup{
+    display: flex;
+    flex-direction: column;
+    gap: 50px;
+}
+
+.button{
+  box-shadow: 0px 10px 0px rgba(0, 0, 0, 0.15);
+  border-radius: 22px;
+  border: 3px solid #fff;
+  box-sizing: border-box;
+  width: 300px;
+  height: auto;
+  background: #ff7700;  
+  font-size:30px;
+  color: white;
+  padding: 12px;
+  font-family: "DynaPuff", system-ui;
+  font-style: normal;
+  cursor: pointer;
+}
+
+.button:hover{
+  background: #ffbf00;
+}
+
+.Monster{
+  position: absolute;
+  left: 65%;
+  width: 500px;
+}
+
+#countdown{
+  width: 100vw;
+  height: 100vh;
+  background-color: #414141;
+  opacity: 80%;
+  position: absolute;
+  z-index: 50;
+  margin: 0;
+  padding: 0;
+  font-size: 300px;
+  color: red;
+  text-align: center;
+}
+
+.icon-button {
+  background-color: rgb(255, 196, 0);
+  border: none;
+  border-radius: 3.6rem;
+  cursor: pointer;
+  height: 3.6rem;
+  line-height: 3.6rem;
+  width: 3.6rem;
+  margin: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#music-icon {
+  width: 30px;
+}
+
+.intro{
+  font-family: "DynaPuff", system-ui;
+  font-style: normal;
+  font-size: 30px;
+  letter-spacing: 0.025em;
+}
