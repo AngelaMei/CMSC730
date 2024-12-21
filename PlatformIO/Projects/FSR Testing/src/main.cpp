@@ -6,14 +6,9 @@
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
 
-const char* ssid = "ShrutisiPhone";
-const char* password = "sushi123";
+const char* ssid = "wifissid";
+const char* password = "password";
 
-// const char* ssid = "AngelaMei";
-// const char* password = "123456789";
-
-// const char* ssid = "5120Navahoe";
-// const char* password = "5120Roommates!";
 
 // Web server setup
 WebServer server(80);

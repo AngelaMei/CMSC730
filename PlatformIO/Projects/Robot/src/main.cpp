@@ -17,11 +17,11 @@ void loop() {
 
     // Use single equals for comparison
     if (incomingByte == 'l') {
-      analogWrite(IN1, 255);
+      analogWrite(IN1, 1000);
       analogWrite(IN2, 0);  // Turn left
     } else if (incomingByte == 'r') {
       analogWrite(IN1, 0);
-      analogWrite(IN2, 255); // Turn right
+      analogWrite(IN2, 1000); // Turn right
     } else {
       // Stop the motor (both pins LOW)
       analogWrite(IN1, 0);

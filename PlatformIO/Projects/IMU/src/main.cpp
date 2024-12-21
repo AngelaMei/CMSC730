@@ -115,12 +115,12 @@ void loop() {
   ACCEL_ZOUT_RAW = (ACCEL_ZOUT_H << 8) | ACCEL_ZOUT_L;
   gZ = ACCEL_ZOUT_RAW / AccelSensitiveScale;
 
-  // Serial.print(">gx:");
-  // Serial.println(gX);
-  // Serial.print(">gy:");
-  // Serial.println(gY);
-  // Serial.print(">gz:");
-  // Serial.println(gZ);
+  Serial.print(">gx:");
+  Serial.println(gX);
+  Serial.print(">gy:");
+  Serial.println(gY);
+  Serial.print(">gz:");
+  Serial.println(gZ);
   delay(10);
 
   // Gyro

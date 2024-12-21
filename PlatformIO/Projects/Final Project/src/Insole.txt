@@ -83,8 +83,8 @@ void handleRoot() {
 // Send force data to the client over WebSocket
 void sendForceData() {
   String jsonData = "{\"force1\":" + String(forceInNewtons1) +
-                    ",\"force2\":" + String(forceInNewtons2) +
-                    ",\"force3\":" + String(forceInNewtons3) + "}";
+                    ",\"force2\":" + String(forceInNewtons1) +
+                    ",\"force3\":" + String(forceInNewtons1) + "}";
   webSocket.broadcastTXT(jsonData); // Send data to all connected clients
   // Serial.print(forceInNewtons1);
 }
@@ -121,8 +121,6 @@ void loop() {
   forceInNewtons1 = convertToForce(fsrReading1);
   forceInNewtons2 = convertToForce(fsrReading2);
   forceInNewtons3 = convertToForce(fsrReading3);
-  Serial.println("fsrReading3:");
-  Serial.print(fsrReading3);
 
   // Handle WebSocket and web server
   server.handleClient();
